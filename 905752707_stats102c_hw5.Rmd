@@ -1,0 +1,134 @@
+---
+title: "STATS 102C - HW #5"
+author: "GENEVIEVE GONZALES - UID: 905752707"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+# Problem 1
+## (a)
+``` {r}
+P <- matrix(c(0.6, 0.6, 0.2, 0.3, 0.3, 0.2, 0.1, 0.1, 0.6), nrow = 3)
+P
+```
+## (b)
+``` {r}
+c(0, 0, 1) %*% (P %*% P)
+# rainy, cloudy, sunny
+```
+
+## (c)
+Yes the Markov chain is irreducible because all the states communicate with each other. And yes it is aperiodic since each element in the matrix is positive. 
+
+The stationary distribution:
+``` {r}
+n <- 8
+P2 <- P
+for (i in 1:(n-1)) {
+  P2 <- P2 %*% P2
+}
+P2
+# this is the P^{2^n} = P^256, large number 
+```
+
+# Problem 2
+$P(X_{t+1} = k + 1 | X_t = k) = \frac{N - k}{N} \frac{k}{N}$ \
+$P(X_{t+1} = k - 1 | X_t = k) = \frac{k}{N} \frac{N-k}{N}$ \
+$P(X_{t+1} = k | X_t = k) = \frac{k}{N} \frac{k}{N} + \frac{N-k}{N} \frac{N-k}{N}$
+
+
+
+# Problem 3
+``` {r}
+alpha <- 0.7
+Y <- numeric(10^4)
+Y[1] <- rnorm(1)
+for(i in 2:10^4) {
+  Y[i] <- alpha * Y[i-1] + rnorm(1)
+}
+
+mean(Y)
+sqrt(var(Y))
+hist(Y, probability = T)
+curve(dnorm(x, sd=sqrt(1/(1-alpha^2))), add = T)
+```
+
+
+
+# Problem 4
+## (a)
+$\pi (\lambda | y) = \frac{f(y| \lambda) * \pi(\lambda)}{\int f(y|\lambda) * \pi(\lambda)d\lambda}$
+
+## (b)
+By (a), $E(\lambda | y) = \frac{\alpha + \sum_i y_i}{\beta + n}$
+
+## (c)
+Take the limit of (b)'s results. When n = $\infty$, it means we have known exactly $f(y | \lambda)$, so $\lambda$ is known
+
+## (d)
+```{r}
+alpha <- 6
+beta <- 2
+E_lambda_0 <- alpha / beta
+n <- 5
+Ts <- 20
+alpha_1 <- Ts + alpha
+beta_1 <- n + beta
+
+n <- 20
+Ts <- 80
+alpha_2 <- Ts + alpha
+beta_2 <- n + beta
+
+curve(dgamma(x, alpha, beta), xlim = c(0,6), ylim = c(0,3))
+curve(dgamma(x, alpha_1, beta_1), add = T, col = "blue")
+curve(dgamma(x, alpha_2, beta_2), add = T, col = "red")
+```
+
+## (e)
+```{r}
+c(qgamma(0.025, alpha, beta), qgamma(0.975, alpha, beta))
+c(qgamma(0.025, alpha_1, beta_1), qgamma(0.975, alpha_1, beta_1))
+c(qgamma(0.025, alpha_2, beta_2), qgamma(0.975, alpha_2, beta_2))
+```
+
+
+
+
+# Problem 5
+## (a) and (b)
+``` {r}
+m <- 10000
+patholog <- function(x) {
+  1 / (pi * (1 + x^2))
+}
+
+x <- numeric(m)
+sigma <- 3
+x[1] <- rnorm(1, 1, sigma)
+for(i in 2:m) {
+  xt <- x[i-1]
+  y <- rnorm(1, mean = xt, sigma)
+  r <- patholog(y) / patholog(xt) * dnorm(xt, mean=y, sigma)/ dnorm(y, mean=xt, sigma)
+  u <- runif(1)
+  if (u <= r) {
+    x[i] <- y
+  }
+  else {
+    x[i] <- xt
+  }
+}
+hist(x)
+
+```
+
+
+## (c)
+``` {r}
+p <- seq(0.1, 0.9, 0.1)
+burn <- 1000
+xb <- x[(burn+1):m]
+Q <- quantile(xb, p)
+round(rbind(Q, qcauchy(p)), 3)
+```
+
